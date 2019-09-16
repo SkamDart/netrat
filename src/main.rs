@@ -20,11 +20,9 @@ fn execute(mut conn: std::net::TcpStream, cmd: String) {
     }
 }
 
-fn repl(conn: std::net::TcpStream) {
+fn repl(conn: std::net::TcpStream, history_path: &str) {
     let mut rl = Editor::<()>::new();
-
-    if rl.load_history("/tmp/history.txt").is_err() {
-        println!("No previous history.");
+    if rl.load_history(history_path).is_err() {
     }
 
     loop {
@@ -43,7 +41,7 @@ fn repl(conn: std::net::TcpStream) {
             }
         }
     }
-    rl.save_history("/tmp/history.txt").unwrap();
+    rl.save_history(history_path).unwrap();
 }
 
 fn main() {
@@ -63,12 +61,22 @@ fn main() {
                 .index(2)
                 .required(true),
         )
+        .arg(
+            Arg::with_name("history_file")
+                .help("file where history commands are stored")
+                .required(false)
+                .takes_value(true)
+        )
         .get_matches();
+
     let host = matches.value_of("host").unwrap();
     let port = matches.value_of("port").unwrap();
     let hostname = host.to_string() + ":" + &port.to_string();
+    let history_path =
+        matches.value_of("history_file").unwrap_or("/tmp/history.txt");
+
     if let Ok(conn) = TcpStream::connect(hostname) {
-        repl(conn);
+        repl(conn, history_path);
     } else {
         println!("Unable to connect to {}:{}", host, port);
     }
