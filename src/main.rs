@@ -34,16 +34,12 @@ fn repl(conn: std::net::TcpStream) {
             Ok(line) => {
                 rl.add_history_entry(line.to_string());
                 execute(sc, line.to_string() + "\r\n");
-            },
-            Err(ReadlineError::Interrupted) => {
-                break
-            },
-            Err(ReadlineError::Eof) => {
-                break
-            },
+            }
+            Err(ReadlineError::Interrupted) => break,
+            Err(ReadlineError::Eof) => break,
             Err(err) => {
                 println!("Error: {}", err);
-                break
+                break;
             }
         }
     }
@@ -52,21 +48,22 @@ fn repl(conn: std::net::TcpStream) {
 
 fn main() {
     let matches = App::new("netrat")
-                    .version("0.0.1")
-                    .author("Cameron Dart <cdart@anduril.com>")
-                    .about("Netrat is a netcat clone written in rust.")
-                    .arg(Arg::with_name("host")
-                                .help("hostname to connect to")
-                                .index(1)
-                                .required(true)
-                    )
-                    .arg(Arg::with_name("port")
-                                .help("port to connect to")
-                                .index(2)
-                                .required(true)
-                    )
-                    .get_matches();
-
+        .version("0.0.1")
+        .author("Cameron Dart <cdart@anduril.com>")
+        .about("Netrat is a netcat clone written in rust.")
+        .arg(
+            Arg::with_name("host")
+                .help("hostname to connect to")
+                .index(1)
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("port")
+                .help("port to connect to")
+                .index(2)
+                .required(true),
+        )
+        .get_matches();
     let host = matches.value_of("host").unwrap();
     let port = matches.value_of("port").unwrap();
     let hostname = host.to_string() + ":" + &port.to_string();
