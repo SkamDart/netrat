@@ -23,6 +23,7 @@ fn execute(mut conn: std::net::TcpStream, cmd: String) {
 fn repl(conn: std::net::TcpStream, history_path: &str) {
     let mut rl = Editor::<()>::new();
     if rl.load_history(history_path).is_err() {
+        println!("Unable to use history path {}", history_path);
     }
 
     loop {
@@ -47,7 +48,7 @@ fn repl(conn: std::net::TcpStream, history_path: &str) {
 fn main() {
     let matches = App::new("netrat")
         .version("0.0.1")
-        .author("Cameron Dart <cdart@anduril.com>")
+        .author("Cameron Dart <camerondart13@gmail.com>")
         .about("Netrat is a netcat clone written in rust.")
         .arg(
             Arg::with_name("host")
