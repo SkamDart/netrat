@@ -4,12 +4,13 @@ extern crate rustyline;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::str::from_utf8;
+use std::time::Duration;
 
 use clap::{App, Arg};
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
-fn execute(mut conn: std::net::TcpStream, cmd: String) {
+fn execute(conn: &mut std::net::TcpStream, cmd: String) {
     if let Ok(_) = conn.write(cmd.as_bytes()) {
         let mut res = [0 as u8; 1024];
         if let Ok(_) = conn.read(&mut res) {
@@ -20,7 +21,7 @@ fn execute(mut conn: std::net::TcpStream, cmd: String) {
     }
 }
 
-fn repl(conn: std::net::TcpStream) {
+fn repl(conn: &mut std::net::TcpStream) {
     let mut rl = Editor::<()>::new();
 
     if rl.load_history("/tmp/history.txt").is_err() {
@@ -28,12 +29,10 @@ fn repl(conn: std::net::TcpStream) {
     }
 
     loop {
-        let readline = rl.readline(">> ");
-        let sc = conn.try_clone().expect("unable to clone tcp stream");
-        match readline {
+        match rl.readline(">> ") {
             Ok(line) => {
                 rl.add_history_entry(line.to_string());
-                execute(sc, line.to_string() + "\r\n");
+                execute(conn, line.to_string() + "\r\n");
             }
             Err(ReadlineError::Interrupted) => break,
             Err(ReadlineError::Eof) => break,
@@ -67,9 +66,7 @@ fn main() {
     let host = matches.value_of("host").unwrap();
     let port = matches.value_of("port").unwrap();
     let hostname = host.to_string() + ":" + &port.to_string();
-    if let Ok(conn) = TcpStream::connect(hostname) {
-        repl(conn);
-    } else {
-        println!("Unable to connect to {}:{}", host, port);
-    }
+    let mut conn = TcpStream::connect(hostname).expect("{} {}");
+    conn.set_read_timeout(Some(Duration::new(1, 0)));
+    repl(&mut conn);
 }
