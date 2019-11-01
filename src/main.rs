@@ -21,11 +21,10 @@ fn execute(conn: &mut std::net::TcpStream, cmd: String) {
     }
 }
 
-fn repl(conn: &mut std::net::TcpStream) {
+fn repl(conn: &mut std::net::TcpStream, history_path: &str) {
     let mut rl = Editor::<()>::new();
-
-    if rl.load_history("/tmp/history.txt").is_err() {
-        println!("No previous history.");
+    if rl.load_history(history_path).is_err() {
+        println!("Unable to use history path {}", history_path);
     }
 
     loop {
@@ -42,13 +41,13 @@ fn repl(conn: &mut std::net::TcpStream) {
             }
         }
     }
-    rl.save_history("/tmp/history.txt").unwrap();
+    rl.save_history(history_path).unwrap();
 }
 
 fn main() {
     let matches = App::new("netrat")
         .version("0.0.1")
-        .author("Cameron Dart <cdart@anduril.com>")
+        .author("Cameron Dart <camerondart13@gmail.com>")
         .about("Netrat is a netcat clone written in rust.")
         .arg(
             Arg::with_name("host")
@@ -62,11 +61,20 @@ fn main() {
                 .index(2)
                 .required(true),
         )
+        .arg(
+            Arg::with_name("history_file")
+                .help("file where history commands are stored")
+                .required(false)
+                .takes_value(true)
+        )
         .get_matches();
+
     let host = matches.value_of("host").unwrap();
     let port = matches.value_of("port").unwrap();
     let hostname = host.to_string() + ":" + &port.to_string();
-    let mut conn = TcpStream::connect(hostname).expect("{} {}");
-    conn.set_read_timeout(Some(Duration::new(1, 0)));
-    repl(&mut conn);
+    let history_path =
+        matches.value_of("history_file").unwrap_or("/tmp/history.txt");
+    let mut conn = TcpStream::connect(hostname).expect("unable to connect");
+    conn.set_read_timeout(Some(Duration::new(1, 0))).expect("unable to set duration");
+    repl(&mut conn, history_path);
 }
